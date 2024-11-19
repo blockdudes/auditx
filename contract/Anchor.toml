@@ -4,8 +4,11 @@
 resolution = true
 skip-lint = false
 
+[programs.devnet]
+auditingx = "EbWNJCby4EJp5VXivriYWAmZVg32jHxYqWJuiCjrfo76"
+
 [programs.localnet]
-auditingx = "9KoFUYa8gA9FxE5X1JfTcmjyCjvSzkjiW41BymM7mUZK"
+auditingx = "5iwxR4ipvAHU9iFZSdyPa1qaPKTZsVS1TCqM374ZcncX"
 
 [registry]
 url = "https://api.apr.dev"
@@ -18,8 +21,11 @@ wallet = "~/.config/solana/id.json"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 [test]
-startup_wait = 20000 
-validator_file = "test-ledger/validator.yml"
+startup_wait = 20000
+shutdown_wait = 2000
+upgradeable = false
 
 [test.validator]
-compute_unit_limit = 1000000
+bind_address = "0.0.0.0"
+ledger = ".anchor/test-ledger"
+rpc_port = 8899

@@ -6,7 +6,7 @@ pub fn app_verifier_address() -> Pubkey {
     Pubkey::from_str("5cjLQKYMciTuqCxdtpUkH7CsLrp1FY2qe2uEhvfePnFr").unwrap()
 }
 
-declare_id!("9KoFUYa8gA9FxE5X1JfTcmjyCjvSzkjiW41BymM7mUZK");
+declare_id!("HSweEPXfNLNuyY5bHG6PvBrSjxYfFSKHykHNMjtXALtJ");
 
 #[program]
 pub mod auditingx_contract {
@@ -84,7 +84,7 @@ pub mod auditingx_contract {
         require!(deadline > Clock::get()?.unix_timestamp, CustomError::InvalidDeadline);
         
         // Generate proposal ID without borrowing the dao_account again
-        let proposal_id = format!("{}/{}/{}", repository.github_url, dao_owner, Clock::get()?.unix_timestamp);
+        let proposal_id = format!("{}/{}/{}", repository.github_url, *ctx.accounts.creator.key, Clock::get()?.unix_timestamp );
         
         if repository.proposals.iter().any(|p| p.id == proposal_id) {
             return Err(CustomError::ProposalExists.into());
@@ -92,8 +92,9 @@ pub mod auditingx_contract {
         
         // Create and push proposal
         let proposal = Proposal {
-            dao_owner,
             id: proposal_id,
+            dao_owner,
+            proposer: *ctx.accounts.creator.key,
             title,
             description,
             votes_for: 0,
@@ -156,11 +157,6 @@ pub mod auditingx_contract {
             proposal.votes_against += 1;
         }
         
-        // Finalize the proposal if both parties have voted
-        if proposal.voted_by_creator && proposal.voted_by_verifier {
-            proposal.finalized = true;
-        }
-        
         Ok(())
     }
     
@@ -181,11 +177,10 @@ pub mod auditingx_contract {
             .filter(|p| {
                 p.voted_by_creator && 
                 p.voted_by_verifier && 
-                p.votes_for > p.votes_against && 
-                !p.finalized && 
-                clock.unix_timestamp > p.deadline
+                p.votes_for > p.votes_against 
             })
             .collect();
+
 
         let approved_count = approved_proposals.len() as u64;
         require!(approved_count > 0, CustomError::NoApprovedProposals);
@@ -215,6 +210,7 @@ pub mod auditingx_contract {
     pub fn claim_reward(ctx: Context<ClaimReward>, repo_name: String, proposal_id: String) -> Result<()> {
         let dao_account = &mut ctx.accounts.dao_account;
         let auditor_key = ctx.accounts.auditor.key();
+        msg!("Auditor key: {:?}", auditor_key);
     
         // Locate the repository by name
         let repository = dao_account.repositories.iter_mut()
@@ -225,11 +221,13 @@ pub mod auditingx_contract {
         let proposal = repository.proposals.iter_mut()
             .find(|p| p.id == proposal_id)
             .ok_or(CustomError::InvalidProposal)?;
+
+        msg!("proposer: {:?}", proposal.proposer);
     
         // Check proposal is finalized, has allocated funds, and verify ownership
         require!(proposal.finalized, CustomError::ProposalNotFinalized);
         require!(proposal.funds_allocated > 0, CustomError::NoFundsToClaim);
-        require!(proposal.dao_owner == auditor_key, CustomError::Unauthorized);
+        require!(proposal.proposer == auditor_key, CustomError::Unauthorized); 
     
         // Claim allocated reward
         let reward = proposal.funds_allocated;
@@ -244,19 +242,75 @@ pub mod auditingx_contract {
         // Perform lamport transfer
         **ctx.accounts.auditor.to_account_info().try_borrow_mut_lamports()? += reward;
         **ctx.accounts.dao_account.to_account_info().try_borrow_mut_lamports()? -= reward;
+
+
+        // invoke(
+        //     &system_instruction::transfer(
+        //         ctx.accounts.dao_account.to_account_info().key,
+        //         ctx.accounts.auditor.to_account_info().key,
+        //         reward,
+        //     ),
+        //     &[
+        //         ctx.accounts.dao_account.to_account_info(),
+        //         ctx.accounts.auditor.to_account_info(),
+        //         ctx.accounts.system_program.to_account_info(),
+        //     ],
+        // )?;
     
         Ok(())
     }
     
-    
+        // Getter function to retrieve all repositories in the DAO
+    pub fn get_all_repositories(ctx: Context<GetAllRepositories>) -> Result<Vec<Repository>> {
+        let dao_account = &ctx.accounts.dao_account;
+        msg!("Repositories: {:?}", dao_account.repositories);
+        Ok(dao_account.repositories.clone())
+    }
+
+    // Getter function to retrieve all repositories owned by a specific client address
+    pub fn get_repositories_by_client(
+        ctx: Context<GetRepositoriesByClient>,
+        client_address: Pubkey,
+    ) -> Result<Vec<Repository>> {
+        let dao_account = &ctx.accounts.dao_account;
+
+        // Filter repositories by the specified client address
+        let client_repositories: Vec<Repository> = dao_account.repositories
+            .iter()
+            .filter(|repo| repo.dao_owner == client_address)
+            .cloned()
+            .collect();
+
+        msg!("Client Repositories: {:?}", client_repositories);
+        Ok(client_repositories)
+    }
+
+    // Getter function to retrieve all proposals in a specified repository by name
+    pub fn get_proposals_in_repository(
+        ctx: Context<GetProposalsInRepository>,
+        repo_name: String,
+    ) -> Result<Vec<Proposal>> {
+        let dao_account = &ctx.accounts.dao_account;
+
+        // Find the specified repository by name
+        let repository = dao_account.repositories
+            .iter()
+            .find(|repo| repo.name == repo_name)
+            .ok_or(CustomError::RepositoryNotFound)?;
+
+        // Return the proposals in the specified repository
+        Ok(repository.proposals.clone())
+    }
+
 }
 
 // --- State Structures ---
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Debug)]
 pub struct Proposal {
-    pub dao_owner: Pubkey,
     pub id: String,
+    pub dao_owner: Pubkey,
+    pub proposer: Pubkey,
     pub title: String,
     pub description: String,
     pub votes_for: u64,
@@ -269,7 +323,7 @@ pub struct Proposal {
 }
 
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Debug)]
 pub struct Repository {
     pub name: String,
     pub github_url: String,
@@ -353,11 +407,30 @@ pub struct FindRepositoryByGithubUrl<'info> {
     pub dao_account: Account<'info, DaoState>,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Debug)]
 pub enum RepoStatus {
     Active,
     Inactive,
 }
+
+#[derive(Accounts)]
+pub struct GetAllRepositories<'info> {
+    #[account(mut)]
+    pub dao_account: Account<'info, DaoState>,
+}
+
+#[derive(Accounts)]
+pub struct GetRepositoriesByClient<'info> {
+    #[account(mut)]
+    pub dao_account: Account<'info, DaoState>,
+}
+
+#[derive(Accounts)]
+pub struct GetProposalsInRepository<'info> {
+    #[account(mut)]
+    pub dao_account: Account<'info, DaoState>,
+}
+
 
 #[error_code]
 pub enum CustomError {
