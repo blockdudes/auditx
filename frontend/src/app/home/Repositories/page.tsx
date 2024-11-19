@@ -10,6 +10,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useSession } from "next-auth/react";
+import Connect from "@/components/Connect";
 
 // Example repository data for filtering
 const repositoryData = [
@@ -19,6 +21,9 @@ const repositoryData = [
 ];
 
 export default function HomeRepoPage() {
+  const session = useSession();
+
+  console.log(session);
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0 },
@@ -47,8 +52,8 @@ export default function HomeRepoPage() {
   const filteredRepositories = repositoryData.filter((repo) => {
     // Audit Status Filtering
     const matchesAuditStatus = (auditStatus.pending && repo.status === "Pending") ||
-                               (auditStatus.inProgress && repo.status === "In Progress") ||
-                               (auditStatus.completed && repo.status === "Completed");
+      (auditStatus.inProgress && repo.status === "In Progress") ||
+      (auditStatus.completed && repo.status === "Completed");
 
     // Reward Range Filtering: Check if the reward is within the selected range
     const matchesRewardRange = () => {
@@ -74,6 +79,8 @@ export default function HomeRepoPage() {
   // Log filtered repositories for debugging
   console.log("Filtered Repositories: ", filteredRepositories);
 
+
+
   return (
     <motion.div className="container py-8" {...fadeIn}>
       {/* Hero Section */}
@@ -83,6 +90,8 @@ export default function HomeRepoPage() {
           Browse repositories, audit contracts, and earn rewards through decentralized voting.
         </p>
       </motion.div>
+
+      <Connect />
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-8">
         {/* Filter Sidebar Section */}

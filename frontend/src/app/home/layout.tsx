@@ -6,11 +6,13 @@ import { Bell, Moon, Sun } from 'lucide-react'
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(true)
   const pathname = usePathname()
+  const session = useSession();
 
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') !== 'false'
@@ -75,11 +77,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <Bell className="w-5 h-5" />
                 <span className="sr-only">Notifications</span>
               </Button>
-              <motion.div
+              {/* <motion.div
                 className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-              />
+              /> */}
+              <img src={session.data?.user?.image as string} alt="" className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700" />
               <Button className="md:hidden" variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                 <span className="sr-only">{isMenuOpen ? 'Close menu' : 'Open menu'}</span>
                 {isMenuOpen ? "✕" : "☰"}
@@ -122,11 +125,10 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
-        isActive
-          ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400"
-          : "text-gray-600 dark:text-gray-300"
-      }`}
+      className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${isActive
+        ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400"
+        : "text-gray-600 dark:text-gray-300"
+        }`}
     >
       {children}
     </Link>
