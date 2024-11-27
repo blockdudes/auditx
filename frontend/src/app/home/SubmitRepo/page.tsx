@@ -18,6 +18,7 @@ import { AnchorProvider, BN, Program, setProvider } from "@coral-xyz/anchor";
 import * as solanaWeb3 from "@solana/web3.js";
 import { getAllRepos } from "@/lib/features/reposSlice"
 import { useAppDispatch } from "@/lib/hooks"
+import { useSession } from "next-auth/react"
 
 export default function SubmitRepoPage() {
   const dispatch = useAppDispatch();
@@ -30,6 +31,9 @@ export default function SubmitRepoPage() {
     description: '',
     reward: ''
   });
+
+  const session = useSession();
+  console.log('session', session)
 
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
@@ -57,6 +61,9 @@ export default function SubmitRepoPage() {
     const fullDescription = `Contract Type: ${formData.contractType}\n\n${formData.description}`;
     
     try {
+
+      await handleInitializeClient(session.data?.user?.email);
+
       await handleCreateRepository(
         formData.githubUrl,
         formData.projectName,
@@ -80,6 +87,40 @@ export default function SubmitRepoPage() {
       toast.error('Failed to submit repository');
     }
   };
+
+
+  const handleInitializeClient = async (githubUsername: string) => {
+    try {
+        if (!wallet || !wallet.publicKey) {
+            toast.error("connect your wallet");
+            return;
+        }
+
+        const balance = await connection.getBalance(wallet.publicKey);
+        console.log(`Wallet Balance: ${balance / solanaWeb3.LAMPORTS_PER_SOL} SOL`);
+
+        const program = new Program(JSON.parse(JSON.stringify(auditorProgramJSON)), daoProvider);
+        const transaction = await (program.methods as any)
+            .initializeClient(wallet.publicKey, githubUsername)
+            .accounts({
+                daoAccount: daoAccountKeyPair.publicKey,
+                client: wallet.publicKey,
+                systemProgram: solanaWeb3.SystemProgram.programId,
+            })
+            .transaction();
+
+        const { blockhash } = await connection.getLatestBlockhash('confirmed');
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = wallet.publicKey;
+
+        const signedTransaction = await wallet.sendTransaction(transaction, connection);
+        console.log('signedTransaction', signedTransaction);
+    } catch (error) {
+        console.log(error)
+        toast.error(`${error}`)
+    }
+}
+
 
   const handleCreateRepository = async (githubUrl: string, repoName: string, repoDescription: string, reward: number) => {
     try {
@@ -116,6 +157,8 @@ export default function SubmitRepoPage() {
         throw error;
     }
 }
+
+
 
   return (
     
