@@ -21,6 +21,7 @@ export default function RepoCard({
   logo,
   name,
   owner,
+  client,
   status,
   reward,
   postedTime,
@@ -32,6 +33,7 @@ export default function RepoCard({
   logo: string;
   name: string;
   owner: string;
+  client: string;
   status: string;
   reward: string;
   postedTime: string;
@@ -212,6 +214,7 @@ export default function RepoCard({
         }}
         repoName={name}
         repoOwner={owner}
+        client={client}
       />
     </motion.div>
   );

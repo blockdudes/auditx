@@ -15,12 +15,14 @@ import { AnchorProvider, BN, Program, setProvider } from "@coral-xyz/anchor";
 import * as solanaWeb3 from "@solana/web3.js";
 import { getAllRepos } from '@/lib/features/reposSlice'
 import { useAppDispatch } from '@/lib/hooks'
+import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes'
 
 interface ApplyAuditModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   repoName: string
   repoOwner: string
+  client: string
 }
 
 
@@ -30,7 +32,8 @@ export function ApplyAuditModal({
   open, 
   onOpenChange,
   repoName,
-  repoOwner 
+  repoOwner,
+  client
 }: ApplyAuditModalProps) {
   const [proposalName, setProposalName] = useState('')
   const [proposalDescription, setProposalDescription] = useState('')
@@ -42,6 +45,8 @@ export function ApplyAuditModal({
   const { provider, daoProvider } = setupDAO.getProvider(connection, wallet, daoAccountKeyPair);
 
   const handleCreateProposal = async (repoName: string, githubPr: string, proposalTitle: string, proposalDescription: string, proposalDeadline: number) => {
+
+    console.log(repoName, githubPr, proposalTitle, proposalDescription, proposalDeadline)
     try {
         if (!wallet || !wallet.publicKey) {
             toast.error("connect your wallet");
@@ -53,8 +58,9 @@ export function ApplyAuditModal({
         }
         const program = new Program(JSON.parse(JSON.stringify(auditorProgramJSON)), daoProvider);
 
+        const clientPublicKey = new solanaWeb3.PublicKey(client);
 
-        const transaction = await (program.methods as any).createProposal(wallet.publicKey, repoName,githubPr, proposalTitle, proposalDescription, new BN(proposalDeadline))
+        const transaction = await (program.methods as any).createProposal(clientPublicKey, repoName,githubPr, proposalTitle, proposalDescription, new BN(proposalDeadline))
         .accounts({
             daoAccount: daoAccountKeyPair.publicKey,
             creator: wallet.publicKey,
@@ -146,3 +152,5 @@ export function ApplyAuditModal({
     </Dialog>
   )
 }
+
+
