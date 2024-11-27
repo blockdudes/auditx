@@ -67,10 +67,10 @@ export default function Home() {
 
 
     const handleInitializeDao = async () => {
-        // const daoAccount = [245,252,34,21,93,163,156,21,51,108,59,153,254,209,24,116,96,146,14,174,21,246,119,241,77,78,15,147,19,8,206,164,86,241,37,22,230,218,2,26,133,111,225,232,77,180,162,109,142,111,134,145,214,193,251,112,249,1,76,91,61,209,37,134];
+        // const daoAccount = [88,226,187,126,48,90,133,83,11,159,51,106,52,101,203,36,205,46,160,247,114,153,41,74,50,115,61,209,122,66,168,112,250,73,226,141,187,201,202,157,27,103,127,53,63,59,31,29,45,17,73,202,103,42,234,54,96,38,228,155,251,80,214,205]
         // const daoAccountKeyPair = Keypair.fromSecretKey(new Uint8Array(daoAccount));
-        // // console.log('secretKey',bs58.encode(daoAccountKeyPair.secretKey));
-        // console.log(daoAccountKeyPair.publicKey.toBase58());
+        // console.log('secretKey',bs58.encode(daoAccountKeyPair.secretKey));
+        // // console.log(daoAccountKeyPair.secretKey.toBase58());
         // return;
         try {
             if (!wallet || !wallet.publicKey) {
