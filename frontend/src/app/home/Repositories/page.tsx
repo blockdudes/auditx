@@ -277,6 +277,7 @@ export default function HomeRepoPage() {
                       logo={`https://avatar.iran.liara.run/username?username=${repo.name}`}
                       name={repo.name}
                       owner={daoOwnerString}  // This should be a string now
+                      client={repo.owner} 
                       status={statusString}   // This should be a string now
                       reward={`${balance / 10 ** 9} SOL`} // This should be a string now
                       postedTime={repo.postedTime.toString()}

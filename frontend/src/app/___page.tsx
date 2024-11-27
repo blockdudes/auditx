@@ -170,6 +170,7 @@ export default function Home() {
     }
 
     const handleCreateProposal = async (repoName: string,githubPr: string, proposalTitle: string, proposalDescription: string, proposalDeadline: number) => {
+      console.log(repoName, githubPr, proposalTitle, proposalDescription, proposalDeadline)
         try {
             if (!wallet || !wallet.publicKey) {
                 toast.error("connect your wallet");
