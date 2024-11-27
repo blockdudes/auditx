@@ -70,7 +70,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <header className="border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white/80 dark:bg-black/80 backdrop-blur-sm z-50">
           <div className="container mx-auto flex items-center justify-between h-16 px-4">
             <Link href="#" className="flex items-center gap-2">
-              <span className="text-xl font-semibold">Auditingx</span>
+              <span className="text-xl font-semibold">AuditX</span>
             </Link>
             <nav className="hidden md:flex items-center gap-6">
               <NavLink href="/home/Repositories" pathname={pathname}>Repositories</NavLink>
