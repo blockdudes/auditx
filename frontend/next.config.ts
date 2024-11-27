@@ -4,7 +4,14 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactStrictMode: false,
   images: {
-    domains: ['avatar.iran.liara.run'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**', // Replace with your actual domains
+        port: '',
+        pathname: '**',
+      },
+    ],
   },
   typescript: {
     // !! WARN !!
