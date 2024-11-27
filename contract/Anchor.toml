@@ -5,16 +5,16 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-auditingx = "EbWNJCby4EJp5VXivriYWAmZVg32jHxYqWJuiCjrfo76"
+auditingx = "A38Guxt7fP71CZZjB4LCdQ5Xf285EHupq9KsfZQNUWgi"
 
 [programs.localnet]
-auditingx = "5iwxR4ipvAHU9iFZSdyPa1qaPKTZsVS1TCqM374ZcncX"
+auditingx = "A38Guxt7fP71CZZjB4LCdQ5Xf285EHupq9KsfZQNUWgi"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "https://rpc.testnet.soo.network/rpc"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

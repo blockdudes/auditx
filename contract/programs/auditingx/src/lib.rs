@@ -2,11 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::clock::Clock;
 use std::str::FromStr;
 
-pub fn app_verifier_address() -> Pubkey {
-    Pubkey::from_str("5cjLQKYMciTuqCxdtpUkH7CsLrp1FY2qe2uEhvfePnFr").unwrap()
-}
-
-declare_id!("EbWNJCby4EJp5VXivriYWAmZVg32jHxYqWJuiCjrfo76");
+declare_id!("A38Guxt7fP71CZZjB4LCdQ5Xf285EHupq9KsfZQNUWgi");
 
 #[program]
 pub mod auditingx_contract {
@@ -16,6 +12,7 @@ pub mod auditingx_contract {
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         let dao_account = &mut ctx.accounts.dao_account;
         // dao_account.owner = dao_owner;
+        // dao_account.owner = *ctx.accounts.signer.key;
         dao_account.owner = *ctx.accounts.verifier.key;
         dao_account.clients = Vec::new(); // Start with no clients
         Ok(())
@@ -50,8 +47,9 @@ pub mod auditingx_contract {
     pub fn create_repository(
         ctx: Context<CreateRepository>,
         name: String,
+        description: String,
         github_url: String,
-        reward_balance: u64,
+        reward_balance: u64
     ) -> Result<()> {
         let dao_account = &mut ctx.accounts.dao_account;
         let caller = ctx.accounts.caller.key(); // Get the caller's address (the signer)
@@ -78,11 +76,14 @@ pub mod auditingx_contract {
         // Create and add the new repository associated with the caller's address
         client_state.repositories.push(Repository {
             name,
+            description,
             github_url,
-            dao_owner, // Use the previously fetched DAO owner
+            dao_owner, 
+            owner: caller,
             status: RepoStatus::Active,
             proposals: vec![],
             balance: reward_balance,
+            posted_time: Clock::get()?.unix_timestamp,
         });
     
         Ok(())
@@ -111,6 +112,7 @@ pub mod auditingx_contract {
         ctx: Context<CreateProposal>,
         client_address: Pubkey,
         repo_name: String,
+        github_pr: String,
         title: String,
         description: String,
         deadline: i64,
@@ -142,6 +144,7 @@ pub mod auditingx_contract {
             votes_for: 0,
             votes_against: 0,
             finalized: false,
+            github_pr: github_pr,
             deadline,
             voted_by_creator: false,
             voted_by_verifier: false,
@@ -154,15 +157,20 @@ pub mod auditingx_contract {
     }
     
 
-    pub fn vote(ctx: Context<Vote>, repo_name: String, proposal_id: String, vote: bool) -> Result<()> {
+    pub fn vote(ctx: Context<Vote>,client_address: Pubkey, repo_name: String, proposal_id: String, vote: bool) -> Result<()> {
         let dao_account = &mut ctx.accounts.dao_account;
         
         // Capture dao_owner and app_verifier public keys
         let dao_owner = dao_account.owner;
-        let app_verifier = app_verifier_address();
-        
+        let voter = *ctx.accounts.voter.key;
+
+         // Validate that the voter is either the creator of the repository or the app verifier
+         require!(
+            voter == client_address || voter == dao_owner,
+            CustomError::Unauthorized
+        );
+
         // Get the client state by searching for the client that is trying to vote
-        let client_address = *ctx.accounts.voter.key;
         let client_entry = dao_account.clients.iter_mut()
             .find(|c| c.address == client_address)
             .ok_or(CustomError::ClientNotFound)?;
@@ -180,20 +188,15 @@ pub mod auditingx_contract {
         
         // Ensure voting is still open and proposal is not finalized
         let clock = Clock::get()?;
-        require!(clock.unix_timestamp <= proposal.deadline, CustomError::VotingClosed);
         require!(!proposal.finalized, CustomError::AlreadyFinalized);
     
-        // Validate that the voter is either the creator of the repository or the app verifier
-        require!(
-            client_address == dao_owner || client_address == app_verifier,
-            CustomError::Unauthorized
-        );
+       
     
         // Track who has voted
-        if client_address == dao_owner {
+        if voter == client_address {
             require!(!proposal.voted_by_creator, CustomError::AlreadyVoted);
             proposal.voted_by_creator = true;
-        } else if client_address == app_verifier {
+        } else if voter == dao_owner {
             require!(!proposal.voted_by_verifier, CustomError::AlreadyVoted);
             proposal.voted_by_verifier = true;
         }
@@ -209,13 +212,16 @@ pub mod auditingx_contract {
     }
     
     
-    pub fn finalize_all_proposals(ctx: Context<FinalizeAllProposals>, repo_name: String) -> Result<()> {
+    pub fn finalize_all_proposals(ctx: Context<FinalizeAllProposals>, client_address: Pubkey, repo_name: String) -> Result<()> {
         let dao_account = &mut ctx.accounts.dao_account;
         let clock = Clock::get()?;
+
+        let caller = *ctx.accounts.client.key;
+        require!(caller == dao_account.owner || caller == client_address, CustomError::Unauthorized);
         
         // Get the client state
         let client_entry = dao_account.clients.iter_mut()
-            .find(|c| c.address == ctx.accounts.finalizer.key())
+            .find(|c| c.address == client_address)
             .ok_or(CustomError::ClientNotFound)?;
         let client_state = &mut client_entry.state;
     
@@ -259,14 +265,13 @@ pub mod auditingx_contract {
         Ok(())
     }
 
-    pub fn claim_reward(ctx: Context<ClaimReward>, repo_name: String, proposal_id: String) -> Result<()> {
+    pub fn claim_reward(ctx: Context<ClaimReward>, client_address: Pubkey, repo_name: String, proposal_id: String) -> Result<()> {
         let dao_account = &mut ctx.accounts.dao_account;
         let auditor_key = ctx.accounts.auditor.key();
-        msg!("Auditor key: {:?}", auditor_key);
         
         // Find the client associated with the auditor key (if they are registered as a client)
         let client_entry = dao_account.clients.iter_mut()
-            .find(|c| c.address == auditor_key)
+            .find(|c| c.address == client_address)
             .ok_or(CustomError::ClientNotFound)?;
         let client_state = &mut client_entry.state;
     
@@ -298,8 +303,8 @@ pub mod auditingx_contract {
         );
         
         // Perform lamport transfer
-        **ctx.accounts.auditor.to_account_info().try_borrow_mut_lamports()? += reward;
         **ctx.accounts.dao_account.to_account_info().try_borrow_mut_lamports()? -= reward;
+        **ctx.accounts.auditor.to_account_info().try_borrow_mut_lamports()? += reward;
     
         Ok(())
     }
@@ -375,6 +380,7 @@ pub struct Proposal {
     pub votes_for: u64,
     pub votes_against: u64,
     pub finalized: bool,
+    pub github_pr: String,
     pub deadline: i64,
     pub voted_by_creator: bool,
     pub voted_by_verifier: bool,
@@ -385,11 +391,14 @@ pub struct Proposal {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Debug)]
 pub struct Repository {
     pub name: String,
+    pub description: String,
     pub github_url: String,
     pub dao_owner: Pubkey,
+    pub owner: Pubkey,
     pub status: RepoStatus,
     pub proposals: Vec<Proposal>,
     pub balance: u64,
+    pub posted_time: i64,
 }
 
 
@@ -442,7 +451,7 @@ pub struct FinalizeAllProposals<'info> {
     #[account(mut)]
     pub dao_account: Account<'info, DaoState>,
     #[account(mut)]
-    pub finalizer: Signer<'info>,
+    pub client: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -506,12 +515,7 @@ pub struct DaoState {
 
 #[derive(Accounts)]
 pub struct InitializeClient<'info> {
-    #[account(init, payer = client, 
-        space = 8 + // discriminator
-        32 + // owner pubkey
-        4 + 1000 + // github username (string)
-        4 + (150 * (32 + 8 + 8)) // reduce capacity to stay under 10KB
-    )]
+    #[account(mut)]
     pub dao_account: Account<'info, DaoState>,
     #[account(mut)]
     pub client: Signer<'info>, // The client calling this function

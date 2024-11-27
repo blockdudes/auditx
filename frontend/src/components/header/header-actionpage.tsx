@@ -20,7 +20,7 @@ export default function HeaderActionPage() {
               <Link href={"/"}>
                 <span className="flex items-center relative">
                   <p className="text-3xl lg:text-4xl font-bold bg-logoGradient dark:bg-logoGradientDark bg-clip-text text-transparent">
-                    ActionX
+                    AuditX
                   </p>
                 </span>
               </Link>
@@ -48,7 +48,7 @@ export default function HeaderActionPage() {
               <Link
                 target="_blank"
                 href={
-                  "https://chromewebstore.google.com/detail/actionx/bopjneenkbedcakaheonfocnagfdpoeo"
+                  "#"
                 }
                 className="bg-[#e9e9e9] text-black py-2 px-4 rounded-lg block lg:inline-block"
               >

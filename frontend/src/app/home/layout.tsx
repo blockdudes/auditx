@@ -5,12 +5,17 @@ import { motion } from "framer-motion"
 import { Bell, Moon, Sun } from 'lucide-react'
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
+import { useWallet } from "@solana/wallet-adapter-react"
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(true)
   const pathname = usePathname()
+  const wallet = useWallet()
+  const session = useSession();
+  const router = useRouter()
 
   useEffect(() => {
     const isDark = localStorage.getItem('darkMode') !== 'false'
@@ -24,6 +29,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     localStorage.setItem('darkMode', newDarkMode.toString())
     document.documentElement.classList.toggle('dark', newDarkMode)
   }
+
+  const handleDisconnect = async () => {
+    // await signOut(); // Assuming you're using NextAuth's signOut
+    await wallet.disconnect()
+    router.push('/')
+  };
 
   return (
     <div className={`min-h-screen bg-white dark:bg-black text-gray-900 dark:text-gray-100 transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}>
@@ -75,11 +86,27 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <Bell className="w-5 h-5" />
                 <span className="sr-only">Notifications</span>
               </Button>
-              <motion.div
-                className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              />
+              <div className="relative">
+                <img 
+                  src={session.data?.user?.image as string} 
+                  alt="" 
+                  className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 cursor-pointer"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                />
+                
+                {isMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5">
+                    <div className="py-1">
+                      <button
+                        onClick={handleDisconnect}
+                        className="w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        Disconnect Wallet
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               <Button className="md:hidden" variant="ghost" size="icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
                 <span className="sr-only">{isMenuOpen ? 'Close menu' : 'Open menu'}</span>
                 {isMenuOpen ? "✕" : "☰"}
@@ -122,11 +149,10 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${
-        isActive
-          ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400"
-          : "text-gray-600 dark:text-gray-300"
-      }`}
+      className={`text-sm font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${isActive
+        ? "text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400"
+        : "text-gray-600 dark:text-gray-300"
+        }`}
     >
       {children}
     </Link>

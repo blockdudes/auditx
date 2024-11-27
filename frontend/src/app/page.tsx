@@ -11,6 +11,7 @@ import { useWallet, WalletProvider } from '@solana/wallet-adapter-react';
 import { useState } from "react";
 import { useEffect } from "react";
 import { AlphaWalletAdapter } from '@solana/wallet-adapter-wallets'; 
+import Connect from "@/components/Connect";
 
 
 

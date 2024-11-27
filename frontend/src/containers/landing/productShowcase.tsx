@@ -1,5 +1,5 @@
 "use client";
-import appScreen from "@/assets/images/exampleCreateAction.jpg";
+import appScreen from "@/assets/images/logo.png"
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useEffect, useRef } from "react";
@@ -38,7 +38,7 @@ export const ProductShowcase = () => {
               src={appScreen}
               ref={appImage}
               alt="app screen"
-              className="mt-14"
+              className="mt-6"
             />
           </motion.div>
         </div>

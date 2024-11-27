@@ -1,0 +1,726 @@
+{
+  "address": "A38Guxt7fP71CZZjB4LCdQ5Xf285EHupq9KsfZQNUWgi",
+  "metadata": {
+    "name": "auditingx_contract",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "claim_reward",
+      "discriminator": [
+        149,
+        95,
+        181,
+        242,
+        94,
+        90,
+        158,
+        162
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        },
+        {
+          "name": "auditor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "client_address",
+          "type": "pubkey"
+        },
+        {
+          "name": "repo_name",
+          "type": "string"
+        },
+        {
+          "name": "proposal_id",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "create_proposal",
+      "discriminator": [
+        132,
+        116,
+        68,
+        174,
+        216,
+        160,
+        198,
+        22
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        },
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "client_address",
+          "type": "pubkey"
+        },
+        {
+          "name": "repo_name",
+          "type": "string"
+        },
+        {
+          "name": "github_pr",
+          "type": "string"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "deadline",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "create_repository",
+      "discriminator": [
+        241,
+        131,
+        206,
+        187,
+        2,
+        121,
+        223,
+        253
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        },
+        {
+          "name": "caller",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "github_url",
+          "type": "string"
+        },
+        {
+          "name": "reward_balance",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "finalize_all_proposals",
+      "discriminator": [
+        222,
+        81,
+        168,
+        4,
+        56,
+        11,
+        103,
+        188
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        },
+        {
+          "name": "client",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "client_address",
+          "type": "pubkey"
+        },
+        {
+          "name": "repo_name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "find_repository_by_githuburl",
+      "discriminator": [
+        38,
+        224,
+        228,
+        15,
+        199,
+        101,
+        196,
+        37
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "github_url",
+          "type": "string"
+        }
+      ],
+      "returns": {
+        "defined": {
+          "name": "Repository"
+        }
+      }
+    },
+    {
+      "name": "get_all_repositories",
+      "discriminator": [
+        125,
+        31,
+        182,
+        164,
+        134,
+        252,
+        224,
+        240
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        }
+      ],
+      "args": [],
+      "returns": {
+        "vec": {
+          "defined": {
+            "name": "Repository"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_proposals_in_repository",
+      "discriminator": [
+        204,
+        99,
+        136,
+        98,
+        88,
+        59,
+        142,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "client_address",
+          "type": "pubkey"
+        },
+        {
+          "name": "repo_name",
+          "type": "string"
+        }
+      ],
+      "returns": {
+        "vec": {
+          "defined": {
+            "name": "Proposal"
+          }
+        }
+      }
+    },
+    {
+      "name": "get_repositories_by_client",
+      "discriminator": [
+        252,
+        33,
+        212,
+        4,
+        32,
+        19,
+        42,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "client_address",
+          "type": "pubkey"
+        }
+      ],
+      "returns": {
+        "vec": {
+          "defined": {
+            "name": "Repository"
+          }
+        }
+      }
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "verifier",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_client",
+      "discriminator": [
+        160,
+        113,
+        132,
+        124,
+        243,
+        236,
+        21,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        },
+        {
+          "name": "client",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "client_address",
+          "type": "pubkey"
+        },
+        {
+          "name": "github_username",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "vote",
+      "discriminator": [
+        227,
+        110,
+        155,
+        23,
+        136,
+        126,
+        172,
+        25
+      ],
+      "accounts": [
+        {
+          "name": "dao_account",
+          "writable": true
+        },
+        {
+          "name": "voter",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "client_address",
+          "type": "pubkey"
+        },
+        {
+          "name": "repo_name",
+          "type": "string"
+        },
+        {
+          "name": "proposal_id",
+          "type": "string"
+        },
+        {
+          "name": "vote",
+          "type": "bool"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DaoState",
+      "discriminator": [
+        24,
+        50,
+        14,
+        105,
+        233,
+        60,
+        201,
+        244
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized action. Only the APP_VERIFIER_ADDRESS can initialize the DAO."
+    },
+    {
+      "code": 6001,
+      "name": "RepositoryInactive",
+      "msg": "The repository is inactive."
+    },
+    {
+      "code": 6002,
+      "name": "RepositoryNotFound",
+      "msg": "The repository was not found."
+    },
+    {
+      "code": 6003,
+      "name": "InvalidProposal",
+      "msg": "The proposal ID is invalid."
+    },
+    {
+      "code": 6004,
+      "name": "AlreadyFinalized",
+      "msg": "The proposal has already been finalized."
+    },
+    {
+      "code": 6005,
+      "name": "VotingClosed",
+      "msg": "Voting for this proposal has closed."
+    },
+    {
+      "code": 6006,
+      "name": "InvalidDeadline",
+      "msg": "The provided deadline is invalid."
+    },
+    {
+      "code": 6007,
+      "name": "NoFundsToClaim",
+      "msg": "No funds available for claiming."
+    },
+    {
+      "code": 6008,
+      "name": "ProposalNotFinalized",
+      "msg": "Proposal has not been finalized yet."
+    },
+    {
+      "code": 6009,
+      "name": "InsufficientFunds",
+      "msg": "Insufficient funds in the DAO."
+    },
+    {
+      "code": 6010,
+      "name": "ProposalExists",
+      "msg": "A proposal with this ID already exists."
+    },
+    {
+      "code": 6011,
+      "name": "AlreadyVoted",
+      "msg": "The user has already voted."
+    },
+    {
+      "code": 6012,
+      "name": "NoApprovedProposals",
+      "msg": "No proposals were approved by both parties"
+    },
+    {
+      "code": 6013,
+      "name": "ArithmeticError",
+      "msg": "Arithmetic error during calculations"
+    },
+    {
+      "code": 6014,
+      "name": "RepositoryAlreadyActive",
+      "msg": "Repository is already active"
+    },
+    {
+      "code": 6015,
+      "name": "ClientAlreadyRegistered",
+      "msg": "Client is already registered"
+    },
+    {
+      "code": 6016,
+      "name": "ClientNotFound",
+      "msg": "Client not found"
+    },
+    {
+      "code": 6017,
+      "name": "RepositoryAlreadyExists",
+      "msg": "Repository already exists"
+    }
+  ],
+  "types": [
+    {
+      "name": "ClientEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "address",
+            "type": "pubkey"
+          },
+          {
+            "name": "state",
+            "type": {
+              "defined": {
+                "name": "ClientState"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClientState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "github_username",
+            "type": "string"
+          },
+          {
+            "name": "repositories",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Repository"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DaoState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "clients",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "ClientEntry"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Proposal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "dao_owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "proposer",
+            "type": "pubkey"
+          },
+          {
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "votes_for",
+            "type": "u64"
+          },
+          {
+            "name": "votes_against",
+            "type": "u64"
+          },
+          {
+            "name": "finalized",
+            "type": "bool"
+          },
+          {
+            "name": "github_pr",
+            "type": "string"
+          },
+          {
+            "name": "deadline",
+            "type": "i64"
+          },
+          {
+            "name": "voted_by_creator",
+            "type": "bool"
+          },
+          {
+            "name": "voted_by_verifier",
+            "type": "bool"
+          },
+          {
+            "name": "funds_allocated",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RepoStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Inactive"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Repository",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          },
+          {
+            "name": "github_url",
+            "type": "string"
+          },
+          {
+            "name": "dao_owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "owner",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "RepoStatus"
+              }
+            }
+          },
+          {
+            "name": "proposals",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Proposal"
+                }
+              }
+            }
+          },
+          {
+            "name": "balance",
+            "type": "u64"
+          },
+          {
+            "name": "posted_time",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ]
+}

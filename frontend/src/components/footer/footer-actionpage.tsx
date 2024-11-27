@@ -12,7 +12,7 @@ import {
         <div className="container ">
           <div className="flex flex-col-reverse items-center justify-between gap-6 truncate py-2 lg:flex-row lg:gap-4">
             <span className="text-subtext font-semibold text-tertiary">
-              Made with ♥︎ by Weminal labs.
+              Made with ♥︎ .
             </span>
             <div className="flex flex-col items-center justify-between gap-3 text-text font-semibold text-primary lg:flex-row lg:gap-10">
               <Link
@@ -20,7 +20,7 @@ import {
                 className="flex gap-1.5 transition-colors hover:text-primary/80"
               >
                 <IconInfoCircleFilled />
-                What are ActionX ?
+                What are AuditX ?
               </Link>
               <Link
                 href={"#"}

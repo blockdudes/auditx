@@ -31,7 +31,8 @@ describe('auditingx_contract', () => {
   const githubUrl = "https://github.com/example/repo";
   const proposalTitle = "Improve Documentation";
   const proposalDescription = "We need to improve the documentation for the project.";
-  const proposalDeadline = 1682332800; // A unix timestamp
+  const proposalDeadline = 1832004632; // A unix timestamp
+
 
   it('initializes the DAO correctly', async () => {
     // Create account to store the DAO state
@@ -53,6 +54,7 @@ describe('auditingx_contract', () => {
       .rpc();
 
     const account = await program.account.daoState.fetch(daoAccount.publicKey);
+    console.log('account',account)
     assert.equal(
       account.owner.toString(), 
       appVerifier.publicKey.toString(),
@@ -84,93 +86,157 @@ describe('auditingx_contract', () => {
     }
   });
 
-  // it('creates a repository successfully', async () => {
-  //   await program.rpc.createRepository(repositoryName, githubUrl, new anchor.BN(1000), {
-  //     accounts: {
-  //       daoAccount: daoOwner.publicKey,  // The DAO account holding the repo
-  //       caller: client.publicKey,  // Client creating the repository
-  //       systemProgram: anchor.web3.SystemProgram.programId,
-  //     },
-  //     signers: [client],
-  //   });
+  it('creates a repository successfully', async () => {
+    await program.rpc.createRepository(repositoryName, githubUrl, new anchor.BN(1000), {
+      accounts: {
+        daoAccount: daoAccount.publicKey,  // The DAO account holding the repo
+        caller: client.publicKey,  // Client creating the repository
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+      signers: [client]
+    });
 
-  //   const daoAccount = await program.account.daoState.fetch(daoOwner.publicKey);
-  //   const clientEntry = daoAccount.clients.find(c => c.address.toString() === client.publicKey.toString());
-  //   const repo = clientEntry.state.repositories.find(r => r.githubUrl === githubUrl);
-  //   assert.isDefined(repo, "Repository should be created.");
-  //   assert.equal(repo.name, repositoryName, "Repository name should match");
-  // });
+    const daoAccount_data = await program.account.daoState.fetch(daoAccount.publicKey);
+    const clientEntry = daoAccount_data.clients.find(c => c.address.toString() === client.publicKey.toString());
+    const repo = clientEntry.state.repositories.find(r => r.githubUrl === githubUrl);
+    assert.ok(repo, "Repository should be created.");
+    assert.equal(repo.name, repositoryName, "Repository name should match");
+  });
 
-  // it('creates a proposal', async () => {
-  //   await program.rpc.createProposal(client.publicKey, repositoryName, proposalTitle, proposalDescription, new anchor.BN(proposalDeadline), {
-  //     accounts: {
-  //       daoAccount: daoOwner.publicKey,
-  //       creator: client.publicKey,
-  //       systemProgram: anchor.web3.SystemProgram.programId,
-  //     },
-  //     signers: [client],
-  //   });
+  it('creates a proposal', async () => {
+    await program.rpc.createProposal(client.publicKey, repositoryName, proposalTitle, proposalDescription, new anchor.BN(proposalDeadline), {
+      accounts: {
+        daoAccount: daoAccount.publicKey,
+        creator: client.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+      signers: [client],
+    });
 
-  //   const daoAccount = await program.account.daoState.fetch(daoOwner.publicKey);
-  //   const clientEntry = daoAccount.clients.find(c => c.address.toString() === client.publicKey.toString());
-  //   const repo = clientEntry.state.repositories.find(r => r.name === repositoryName);
-  //   const proposal = repo.proposals.find(p => p.title === proposalTitle);
-  //   assert.isDefined(proposal, "Proposal should be created.");
-  //   assert.equal(proposal.title, proposalTitle, "Proposal title should match");
-  // });
+    const daoAccount_data = await program.account.daoState.fetch(daoAccount.publicKey);
+    const clientEntry = daoAccount_data.clients.find(c => c.address.toString() === client.publicKey.toString());
+    const repo = clientEntry.state.repositories.find(r => r.name === repositoryName);
+    const proposal = repo.proposals.find(p => p.title === proposalTitle);
+    assert.ok(proposal, "Proposal should be created.");
+    assert.equal(proposal.title, proposalTitle, "Proposal title should match");
+  });
 
-  // it('votes on a proposal', async () => {
-  //   // Simulate voting by either the DAO owner or app verifier (app_verifier_address).
-  //   const daoOwnerPubkey = daoOwner.publicKey;
-  //   const voteChoice = true; // Voting "For"
+  it('votes on a proposal', async () => {
+    // Simulate voting by either the DAO owner or app verifier (app_verifier_address).
+    const voteChoice = true; // Voting "For"
     
-  //   await program.rpc.vote(repositoryName, "My Awesome Repo/Improve Documentation/1682332800", voteChoice, {
-  //     accounts: {
-  //       daoAccount: daoOwner.publicKey,
-  //       voter: daoOwner.publicKey,  // Can vote as the DAO owner
-  //       systemProgram: anchor.web3.SystemProgram.programId,
-  //     },
-  //     signers: [daoOwner],
-  //   });
+    await program.methods
+        .vote(
+            client.publicKey,  // client_address parameter
+            repositoryName,
+            `${repositoryName}/${proposalTitle}/${proposalDeadline}`,
+            voteChoice
+        )
+        .accounts({
+            daoAccount: daoAccount.publicKey,
+            voter: appVerifier.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+        })
+        .signers([appVerifier])
+        .rpc();
 
-  //   // Verify that the vote was counted
-  //   const daoAccount = await program.account.daoState.fetch(daoOwner.publicKey);
-  //   const clientEntry = daoAccount.clients.find(c => c.address.toString() === daoOwnerPubkey.toString());
-  //   const repo = clientEntry.state.repositories.find(r => r.name === repositoryName);
-  //   const proposal = repo.proposals.find(p => p.title === proposalTitle);
-  //   assert.isTrue(proposal.votedByCreator, "DAO owner should have voted.");
-  //   assert.equal(proposal.votesFor.toNumber(), 1, "Vote count should be incremented.");
-  // });
 
-  // it('finalizes proposals and distributes rewards', async () => {
-  //   await program.rpc.finalizeAllProposals(repositoryName, {
-  //     accounts: {
-  //       daoAccount: daoOwner.publicKey,
-  //       finalizer: daoOwner.publicKey,  // Finalizer is DAO owner
-  //       systemProgram: anchor.web3.SystemProgram.programId,
-  //     },
-  //     signers: [daoOwner],
-  //   });
+    await program.methods
+        .vote(
+            client.publicKey,  // client_address parameter
+            repositoryName,
+            `${repositoryName}/${proposalTitle}/${proposalDeadline}`,
+            voteChoice
+        )
+        .accounts({
+            daoAccount: daoAccount.publicKey,
+            voter: client.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
+        })
+        .signers([client])
+        .rpc();
 
-  //   const daoAccount = await program.account.daoState.fetch(daoOwner.publicKey);
-  //   const clientEntry = daoAccount.clients.find(c => c.address.toString() === daoOwner.publicKey.toString());
-  //   const repo = clientEntry.state.repositories.find(r => r.name === repositoryName);
-  //   const proposal = repo.proposals.find(p => p.title === proposalTitle);
-  //   assert.isTrue(proposal.finalized, "Proposal should be finalized.");
-  // });
+    // Verify that the vote was counted
+    const daoAccount_data = await program.account.daoState.fetch(daoAccount.publicKey);
+    const clientEntry = daoAccount_data.clients.find(c => c.address.toString() === client.publicKey.toString());
+    const repo = clientEntry.state.repositories.find(r => r.name === repositoryName);
+    const proposal = repo.proposals.find(p => p.title === proposalTitle);
+    console.log('proposal - ', proposal)
+    assert.ok(proposal.votedByCreator, "DAO owner should have voted.");
+    assert.equal(proposal.votesFor.toNumber(), 2, "Vote count should be incremented.");
+  });
 
-  // it('claims rewards', async () => {
-  //   await program.rpc.claimReward(repositoryName, "My Awesome Repo/Improve Documentation/1682332800", {
-  //     accounts: {
-  //       daoAccount: daoOwner.publicKey,
-  //       auditor: client.publicKey,  // Claiming reward by the client (auditor)
-  //       systemProgram: anchor.web3.SystemProgram.programId,
-  //     },
-  //     signers: [client],
-  //   });
+  it('finalizes proposals and distributes rewards', async () => {
 
-  //   // Check if the reward was correctly transferred (this would involve checking the lamport balance)
-  //   const auditorBalance = await provider.connection.getAccountInfo(client.publicKey);
-  //   assert.isNotNull(auditorBalance, "Auditor's balance should have been updated.");
-  // });
+    await program.rpc.finalizeAllProposals(client.publicKey, repositoryName, {
+      accounts: {
+        daoAccount: daoAccount.publicKey,
+        client: client.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+      signers: [client],
+    });
+
+    const daoAccount_data = await program.account.daoState.fetch(daoAccount.publicKey);
+    const clientEntry = daoAccount_data.clients.find(c => c.address.toBase58() === client.publicKey.toString());
+    console.log('clientEntry',clientEntry)
+    const repo = clientEntry.state.repositories.find(r => r.name === repositoryName);
+    const proposal = repo.proposals.find(p => p.title === proposalTitle);
+    assert.ok(proposal.finalized, "Proposal should be finalized.");
+  });
+
+  it('claims rewards', async () => {
+
+    const transferTx = await provider.connection.requestAirdrop(
+      client.publicKey,
+      anchor.web3.LAMPORTS_PER_SOL * 20 // 10 SOL for example
+  );
+    const transfer2Tx = await provider.connection.requestAirdrop(
+      daoAccount.publicKey,
+      anchor.web3.LAMPORTS_PER_SOL * 20 // 10 SOL for example
+  );
+    await provider.connection.confirmTransaction(transfer2Tx);
+    // await provider.connection.confirmTransaction(transfer2Tx);
+    const auditorBalance1 = await provider.connection.getAccountInfo(client.publicKey);
+    console.log('Auditor balance:', auditorBalance1?.lamports / anchor.web3.LAMPORTS_PER_SOL, 'SOL');
+
+    const daoBalance = await provider.connection.getBalance(daoAccount.publicKey);
+    console.log('DAO balance:', daoBalance / anchor.web3.LAMPORTS_PER_SOL, 'SOL');
+
+
+  
+    await program.rpc.claimReward(client.publicKey, repositoryName, `${repositoryName}/${proposalTitle}/${proposalDeadline}`, {
+      accounts: {
+        daoAccount: daoAccount.publicKey,
+        auditor: client.publicKey,  // Claiming reward by the client (auditor)
+        systemProgram: anchor.web3.SystemProgram.programId,
+      },
+      signers: [client],
+    });
+
+    const daoBalance2 = await provider.connection.getBalance(daoAccount.publicKey);
+    console.log('DAO balance:', daoBalance2 / anchor.web3.LAMPORTS_PER_SOL, 'SOL');
+
+    // Check if the reward was correctly transferred (this would involve checking the lamport balance)
+    const auditorBalance2 = await provider.connection.getAccountInfo(client.publicKey);
+    console.log('Auditor balance:', auditorBalance2?.lamports / anchor.web3.LAMPORTS_PER_SOL, 'SOL');
+    assert.ok(auditorBalance2, "Auditor's balance should have been updated.");
+  });
+
+  it('initializes a client with the same address', async () => {
+    const new_client = anchor.web3.Keypair.generate();
+
+    await program.methods
+    .initializeClient(new_client.publicKey, "client_github_user")
+    .accounts({
+        daoAccount: daoAccount.publicKey,
+        client: new_client.publicKey,
+        systemProgram: anchor.web3.SystemProgram.programId,
+    })
+    .signers([new_client])
+    .rpc();
+    
+    const daoAccount_data = await program.account.daoState.fetch(daoAccount.publicKey);
+    console.log('final_data', daoAccount_data)
+  });
 });
